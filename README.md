@@ -1,27 +1,40 @@
 # Urban Traffic Forecasting with Graph Neural Networks
 
-This project predicts short-term traffic speed by modeling road sensors as a graph and learning spatial-temporal patterns with deep learning.
+This project builds a deep learning forecasting pipeline for **short-horizon traffic speed prediction** on a city-wide sensor network.  
+Instead of treating each sensor independently, it models sensors as nodes in a graph and learns both:
 
-It implements and compares:
+- **Spatial structure** (how nearby roads influence one another)
+- **Temporal dynamics** (how traffic evolves over time)
+
+The repository implements and compares two architectures:
+
 - `STGCN` (Spatio-Temporal Graph Convolutional Network)
 - `ASTGCN` (Attention-based STGCN)
 
-## Why it matters
+## Problem Statement
 
-City-scale traffic data is highly structured in both space (neighboring roads influence each other) and time (rush-hour and periodic effects). This project shows how graph neural networks can capture both dimensions and improve forecasting accuracy.
+Traffic operations teams need accurate short-term predictions (next 30-60 minutes) to support:
 
-## Dataset
+- congestion mitigation,
+- signal/control strategy planning,
+- route guidance and ETA stabilization.
+
+Classical time-series methods typically miss graph-level road dependencies.  
+This project demonstrates how graph neural networks improve prediction quality by explicitly learning topology-aware interactions.
+
+## Dataset and Forecasting Setup
 
 - **Dataset:** PEMS04
-- **Sensors:** 307
-- **Sampling rate:** 5-minute intervals
-- **Features:** flow, speed, occupancy
-- **Task:** use previous 12 steps to predict next 12 steps
+- **Sensors (nodes):** 307
+- **Sampling interval:** 5 minutes
+- **Input channels per sensor:** flow, speed, occupancy
+- **Lookback window:** 12 steps
+- **Forecast horizon:** 12 steps
 - **Split:** 70% train / 10% validation / 20% test
 
-Download: [Kaggle PEMS dataset](https://www.kaggle.com/datasets/elmahy/pems-dataset)
+Dataset source: [Kaggle - PEMS dataset](https://www.kaggle.com/datasets/elmahy/pems-dataset)
 
-Expected local files:
+Expected local placement:
 
 ```text
 data/
@@ -29,45 +42,80 @@ data/
   PEMS04.csv
 ```
 
-## Tech stack
+## Model Design
 
-- Python 3.8+
-- PyTorch
-- NumPy, pandas, scikit-learn, matplotlib
-- Jupyter Notebook
+### STGCN
 
-## How to run
+- Graph convolution blocks for spatial message passing
+- Temporal convolution blocks for sequence modeling
+- Fully convolutional training flow (parallelizable)
 
-1. Clone the repository.
-2. Create and activate a virtual environment.
-3. Install dependencies.
-4. Place dataset files in `data/`.
-5. Launch Jupyter and run `project.ipynb`.
+### ASTGCN
+
+Extends STGCN by adding attention over:
+
+- spatial neighborhoods,
+- temporal positions,
+- feature channels.
+
+This enables dynamic weighting under non-stationary traffic conditions (e.g., peak-hour transitions and incidents).
+
+## Training and Evaluation
+
+- **Framework:** PyTorch
+- **Objective:** MAE-based training objective
+- **Metrics:** MAE and RMSE on validation/test
+- **Optimizer:** Adam
+- **Epochs:** 10 (as configured in notebook run)
+
+The notebook trains both models and records metrics and artifacts in `models/saved/`.
+
+## Reproducibility Guide
+
+### 1) Environment setup
 
 ```bash
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+### 2) Run notebook
+
+```bash
 jupyter lab
 ```
 
-## Results
+Open `project.ipynb` and run top-to-bottom.
 
-From notebook test runs:
+### 3) Outputs to expect
+
+- saved checkpoint(s) under `models/saved/`
+- printed validation/test metrics
+- comparison output file(s)
+
+## Results Summary
+
+From current notebook outputs:
 
 - **STGCN:** MAE `0.0097`, RMSE `0.0233`
 - **ASTGCN:** MAE `0.0091`, RMSE `0.0227`
 
-ASTGCN improves error metrics versus STGCN, showing the value of learned attention over static neighborhood weighting.
+Interpretation:
 
-## Repository layout
+- ASTGCN reduces both MAE and RMSE versus STGCN
+- The attention mechanism improves robustness when sensor influence is context-dependent
 
-- `project.ipynb` - training + evaluation pipeline
-- `requirements.txt` - dependencies
-- `models/saved/` - saved model artifacts and comparisons
+## Repository Structure
 
-## Next improvements
+- `project.ipynb` - end-to-end pipeline (load -> preprocess -> train -> evaluate)
+- `requirements.txt` - dependency list
+- `models/saved/` - saved checkpoints and comparison artifacts
+- `.gitignore` - excludes local data/model artifacts
 
-- Dynamic adjacency learning
-- Longer forecast horizons
-- External signals (weather/events/incidents)
+## Practical Extensions
+
+- learned/dynamic adjacency construction,
+- longer forecast windows,
+- exogenous inputs (weather, holidays, incident signals),
+- production API wrapping around trained checkpoints.
