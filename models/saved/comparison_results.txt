@@ -1,0 +1,4 @@
+Model: STGCN
+Test MAE: 0.0341
+Test RMSE: 0.0669
+--------------------
