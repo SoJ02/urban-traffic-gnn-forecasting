@@ -1,200 +1,73 @@
-# Temporal Traffic Flow Prediction using STGCN and ASTGCN
+# Urban Traffic Forecasting with Graph Neural Networks
 
-## Project Overview
-Traffic forecasting is a critical task in **Intelligent Transportation Systems (ITS)**, enabling better congestion management, route planning, and urban mobility decisions.  
-This project addresses **short-term traffic speed prediction** by modeling traffic networks as **graphs** and learning both **spatial** and **temporal** dependencies using **Graph Neural Networks (GNNs)**.
+This project predicts short-term traffic speed by modeling road sensors as a graph and learning spatial-temporal patterns with deep learning.
 
-We implement and compare two state-of-the-art models:
-- **STGCN (Spatio-Temporal Graph Convolutional Network)**
-- **ASTGCN (Attention-based Spatio-Temporal Graph Convolutional Network)**
+It implements and compares:
+- `STGCN` (Spatio-Temporal Graph Convolutional Network)
+- `ASTGCN` (Attention-based STGCN)
 
-Both models are evaluated on the real-world **PEMS04** traffic dataset.
+## Why it matters
 
----
+City-scale traffic data is highly structured in both space (neighboring roads influence each other) and time (rush-hour and periodic effects). This project shows how graph neural networks can capture both dimensions and improve forecasting accuracy.
 
-## Theoretical Background
+## Dataset
 
-### Traffic as a Graph Problem
-Traffic sensor networks naturally form a graph:
-- **Nodes:** Traffic sensors (loop detectors)
-- **Edges:** Road network connectivity or distance-based relationships
-- **Node features:** Traffic flow, speed, and occupancy over time
+- **Dataset:** PEMS04
+- **Sensors:** 307
+- **Sampling rate:** 5-minute intervals
+- **Features:** flow, speed, occupancy
+- **Task:** use previous 12 steps to predict next 12 steps
+- **Split:** 70% train / 10% validation / 20% test
 
-Graph-based modeling allows the network to capture **spatial correlations**, such as congestion propagation across neighboring road segments.
+Download: [Kaggle PEMS dataset](https://www.kaggle.com/datasets/elmahy/pems-dataset)
 
----
+Expected local files:
 
-### Temporal Modeling
-Traffic data exhibits strong temporal dependencies due to:
-- Rush-hour patterns
-- Daily and weekly periodicity
-- Sudden disruptions (accidents, weather conditions)
-
-Instead of recurrent models, this project uses **temporal convolutions**, which:
-- Enable parallel computation
-- Are more stable during training
-- Capture short- and mid-range temporal dependencies effectively
-
----
-
-### STGCN (Spatio-Temporal Graph Convolutional Network)
-STGCN integrates:
-1. **Graph Convolutions (GCN)** to model spatial dependencies
-2. **Temporal Convolutions (TCN)** to capture temporal dynamics
-
-#### Key Characteristics:
-- Aggregates information from neighboring sensors
-- Uses a fully convolutional architecture
-- Assumes **fixed spatial relationships** between sensors
-
----
-
-### ASTGCN (Attention-based STGCN)
-ASTGCN extends STGCN by incorporating **attention mechanisms**.
-
-#### Attention Components:
-- **Spatial Attention:** Learns dynamic importance of neighboring sensors
-- **Temporal Attention:** Focuses on the most informative time steps
-- **Feature (Channel) Attention:** Weighs the importance of input features
-
-#### Advantages:
-- Adapts to changing traffic conditions
-- Handles non-stationary traffic patterns better
-- Improves prediction accuracy, especially during peak congestion periods
-
----
-
-## Dataset: PEMS04
-
-- **Number of sensors:** 307  
-- **Time interval:** 5 minutes  
-- **Features per sensor:**
-  - Traffic Flow
-  - Traffic Speed
-  - Occupancy  
-
-### Prediction Task
-- **Input:** Past **12** time steps  
-- **Output:** Next **12** time steps  
-
-### Data Split
-- Train: 70%  
-- Validation: 10%  
-- Test: 20%  
-
-### Dataset Source
-The dataset is obtained from **Kaggle**:  
-https://www.kaggle.com/datasets/elmahy/pems-dataset
-
-Due to its large size, the dataset is **not included in this repository**.
-
-### Setup Instructions
-1. Download the dataset from the Kaggle link above.
-2. Extract the files.
-3. Place the dataset in the following location:
-
-```
+```text
 data/
-└── PEMS04.npz
-└── PEMS04.csv
+  PEMS04.npz
+  PEMS04.csv
 ```
 
----
+## Tech stack
 
-## Repository Structure
-```
-.
-├── project.ipynb
-├── data/
-│   └── PEMS04.npz
-|   └── PEMS04.csv
-├── models/
-│   └── saved/
-│       ├── STGCN_best.pth
-│       └── comparison_results.txt
-├── requirements.txt
-├── README.md
-├── .gitignore
-```
-
----
-
-## Cloning the Repository
-```bash
-git clone <REPOSITORY_URL>
-cd <REPOSITORY_NAME>
-```
-
----
-
-## Environment Setup
-
-### Requirements
-- Python **3.8+**
+- Python 3.8+
 - PyTorch
-- CUDA-enabled GPU (recommended but optional)
+- NumPy, pandas, scikit-learn, matplotlib
+- Jupyter Notebook
 
-### Create Virtual Environment
+## How to run
+
+1. Clone the repository.
+2. Create and activate a virtual environment.
+3. Install dependencies.
+4. Place dataset files in `data/`.
+5. Launch Jupyter and run `project.ipynb`.
+
 ```bash
 python -m venv venv
-source venv/bin/activate        # Linux / macOS
-venv\Scripts\activate         # Windows
-```
-
-### Install Dependencies
-```bash
+venv\Scripts\activate
 pip install -r requirements.txt
-```
-
----
-
-## Running the Project
-
-### Jupyter Notebook
-```bash
 jupyter lab
 ```
 
-Open `project.ipynb` and run all cells sequentially.
-
----
-
-## Model Configuration
-- **Optimizer:** Adam  
-- **Loss Function:** Mean Absolute Error (MAE)  
-- **Epochs:** 10  
-- **Prediction Horizon:** 12 steps  
-- **Device:** GPU / CPU  
-
----
-
 ## Results
-- **ASTGCN consistently outperforms STGCN**
-- ~6% reduction in MAE
-- ~2.5% reduction in RMSE
 
----
+From notebook test runs:
 
-## Limitations
-- Fixed graph structure
-- Short prediction horizon
-- Limited hyperparameter tuning
+- **STGCN:** MAE `0.0097`, RMSE `0.0233`
+- **ASTGCN:** MAE `0.0091`, RMSE `0.0227`
 
----
+ASTGCN improves error metrics versus STGCN, showing the value of learned attention over static neighborhood weighting.
 
-## Future Work
-- Dynamic or learned adjacency matrices
-- Longer-term forecasting
-- Integration with external factors
-- Comparison with DCRNN and Graph WaveNet
+## Repository layout
 
----
+- `project.ipynb` - training + evaluation pipeline
+- `requirements.txt` - dependencies
+- `models/saved/` - saved model artifacts and comparisons
 
-## License
-Academic and educational use only.
+## Next improvements
 
----
-
-## Authors
-Developed as part of an academic project on  
-**Spatio-Temporal Traffic Flow Prediction using Graph Neural Networks**.
+- Dynamic adjacency learning
+- Longer forecast horizons
+- External signals (weather/events/incidents)
